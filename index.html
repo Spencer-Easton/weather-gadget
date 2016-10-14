@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+     html, body {    
+            background-color:#E8F5E9 ;
+            overflow-y: hidden;
+            font-size:18px
+        }
+      
+      #App{       
+        width: 250px;
+        height: 200px;
+        background-color: #E8F5E9;
+        position: absolute;
+        top:0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+      
+      }
+      .dataArea{
+       border:solid;
+        border-color:black;
+        border-width:1px;
+         padding: 0px 10px 10px 10px ; 
+      }
+      .page {
+        
+       
+        position: absolute;
+              }
+      .data{
+        font-size:24px;
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div id="App" hidden>
+      <div id="Current" class="page" hidden>
+        <p><b>Current Conditions</b></p>
+        <div class="dataArea">
+          <div id="TempView"><span><b>Temperature: </b></span><span class="data" id="TempVal"></span></div>
+          <div id="FeelView"><span><b>Feels like: </b></span><span class="data" id="FeelsVal"></span></div>        
+          <div id="WindView"><span><b>Wind: </b></span><span class="data" id="WindVal"></span></div>
+          <div id="rainView" hidden><span><b>Rain: </b></span><span class="data" id="RainVal"></span></div>
+          <div id="snowView" hidden><span><b>Snow: </b></span><span class="data" id="SnowVal"></span></div>      
+        </div>
+      </div>    
+      <div id="Forecast" class="page">
+        <p><b>Today's Forecast</b></p> 
+        <div class="dataArea">
+          <div id="IconView"><span class="data" id="description"></span></div>
+          <div id="fTempHighView"><span><b>Temperature high: </b></span><span class="data" id="fTempHighVal"></span></div>         
+          <div id="fTempLowView"><span><b>Temperature low: </b></span><span class="data" id="fTempLowVal"></span></div>  
+          <div id="fHumView"><span><b>Humidity high: </b></span><span class="data" id="fHumHighVal"></span></div>  
+          <div id="fPrecip"><span><b>Chance of Precip: </b></span><span class="data" id="fPrecipVal"></span></div>
+        </div>
+      </div>
+    </div>
+    
+  </body>
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+   
+   <script>
+     var TempVal = $('#TempVal'),
+         FeelsVal = $('#FeelsVal'),        
+         fTempHighVal = $('#fTempHighVal'),
+         fTempLowVal = $('#fTempLowVal'),
+         WindVal = $('#WindVal'),
+         fWindVal = $('#fWindVal'),
+         RainVal = $('#RainVal'),
+         SnowVal = $('#SnowVal'),
+         RainView = $('#rainView'),
+         SnowView = $('#snowView'),         
+         Current = $('#Current'),
+         Forecast = $('#Forecast'),
+         App = $('#App'),
+         fDesc = $('#description'),
+         fPrecipVal = $("#fPrecipVal"),
+         fHumHighVal = $("#fHumHighVal"),
+         
+         
+         
+         iconUrl = "http://legacy.weather.weatherbug.com/weather-safety/online-weather-center/Data/GetData.ashx?dt=ic&icid=";
+     
+     
+     $(document).ready(function() {
+       fetchWeather();
+       fetchForcast();
+       toggleDivs();
+       App.show();
+       }
+     );
+     
+     function fetchForcast(){
+       google.script.run
+         .withSuccessHandler(renderForcastData)
+         .getForcastWeatherData();
+       setTimeout(fetchWeather, 30000);       
+     }
+     
+     function fetchWeather(){
+       google.script.run
+         .withSuccessHandler(renderWeatherData)
+         .getCurrentWeatherData();
+       setTimeout(fetchWeather, 30000);       
+      };
+     
+     function toggleDivs(){
+     Current.fadeToggle();
+     Forecast.fadeToggle();
+       setTimeout(toggleDivs, 13000); 
+     }
+     
+     
+     
+     function renderForcastData(data){       
+       fDesc.text(data["description"]);
+       fPrecipVal.text(data["adjustedPrecipProbability"]+"%");       
+       fWindVal.text(data["windSpeed"]+" mph "+getCardinal(data["windDirectionDegrees"]));
+       
+     }
+     
+     
+     
+     function renderWeatherData(data){ 
+         var observeData = data.observation;
+         var forcastData = data.highlow;
+         TempVal.text(observeData["temperature"] +"℉");
+         FeelsVal.text(observeData["feelsLike"]+ "℉");
+         WindVal.text(observeData["windSpeedAvg"]+" mph "+getCardinal(data["windDirectionAvg"]));
+         fTempHighVal.text(forcastData["temperatureHigh"]+"℉");
+         fTempLowVal.text(forcastData["temperatureLow"]+"℉");
+         fHumHighVal.text(forcastData["humidityHigh"]+"%")
+         
+         
+         if(data["rainDaily"] != 0){
+           RainVal.text(observeData["rainDaily"] +" inches today");
+           RainView.show();
+         }else{
+           RainView.hide();
+         }
+         if(data["snowDaily"]){
+           SnowVal.text(observeData["rainDaily"] +" inches today");
+           SnowView.show();
+         }else{
+           SnowView.hide();
+         }
+         
+         
+         
+     }
+     
+      //https://gist.github.com/basarat/4670200
+      function getCardinal(angle) {
+        var directions = 8;
+        var degree = 360 / directions;
+        angle = angle + degree/2;
+        
+        if (angle >= 0 * degree && angle < 1 * degree)
+            return "N";
+        if (angle >= 1 * degree && angle < 2 * degree)
+            return "NE";
+        if (angle >= 2 * degree && angle < 3 * degree)
+            return "E";
+        if (angle >= 3 * degree && angle < 4 * degree)
+            return "SE";
+        if (angle >= 4 * degree && angle < 5 * degree)
+            return "S";
+        if (angle >= 5 * degree && angle < 6 * degree)
+            return "SW";
+        if (angle >= 6 * degree && angle < 7 * degree)
+            return "W";
+        if (angle >= 7 * degree && angle < 8 * degree)
+            return "NW";
+        //Should never happen: 
+        return "N";
+    }
+     
+
+     
+   </script>
+</html>
+
+
